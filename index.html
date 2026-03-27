@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TokenTrust</title>
+<link rel="icon" href="tokentrustlogo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="tokentrustlogo.svg">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#FAFAFA;--card:#FFFFFF;--text:#0A0A0A;--text2:#6B6B6B;--text3:#A0A0A0;
+  --border:#E8E8E8;--accent:#0A0A0A;--green:#00C853;--red:#FF3B30;
+  --pill-red-bg:rgba(255,59,48,.12);--pill-red-border:rgba(255,59,48,.25);
+  --pill-yellow-bg:rgba(255,179,0,.12);--pill-yellow-border:rgba(255,179,0,.3);
+  --shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.03);
+  --radius:16px;--sidebar-w:240px;
+}
+html,body{height:100%;font-family:'Poppins',-apple-system,sans-serif;background:var(--bg);overflow:hidden;color:var(--text)}
+.app{display:flex;height:100%;position:relative}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 16px 24px;gap:2px;z-index:50}
+.sidebar-header{display:flex;align-items:center;gap:12px;padding:0 8px;margin-bottom:32px}
+.sidebar-logo{width:40px;height:40px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-logo::after{content:'TT';color:#fff;font-size:13px;font-weight:400;letter-spacing:-.5px}
+.sidebar-brand{font-size:17px;font-weight:400;letter-spacing:-.4px;color:var(--text)}
+.sidebar-brand small{display:block;font-size:11px;font-weight:400;color:var(--text3);margin-top:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;transition:all .15s;position:relative}
+.nav-item:hover{background:rgba(0,0,0,.04)}
+.nav-item.active{background:rgba(0,0,0,.06)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--accent);border-radius:0 3px 3px 0}
+.nav-item svg{width:20px;height:20px;color:var(--text3);flex-shrink:0;transition:color .15s}
+.nav-item.active svg{color:var(--text)}
+.nav-label{font-size:14px;font-weight:400;color:var(--text3);transition:color .15s}
+.nav-item.active .nav-label{color:var(--text);font-weight:400}
+.sidebar-spacer{flex:1}
+.sidebar-user{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--border);margin-top:8px;padding-top:20px}
+.sidebar-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#E8E8E8,#D0D0D0);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text2);font-weight:400}
+.sidebar-user-info{min-width:0}
+.sidebar-user-name{font-size:13px;font-weight:400;color:var(--text)}
+.sidebar-user-email{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Bottom Bar */
+.bottom-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:80;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px))}
+.bottom-bar-inner{display:flex;justify-content:space-around;align-items:center}
+.tab-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;cursor:pointer;border-radius:10px;transition:all .15s}
+.tab-item svg{width:22px;height:22px;color:var(--text3);transition:color .15s}
+.tab-item.active svg{color:var(--text)}
+.tab-label{font-size:9px;font-weight:400;color:var(--text3);transition:color .15s}
+.tab-item.active .tab-label{color:var(--text);font-weight:400}
+
+/* Main */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#ddd transparent}
+.main::-webkit-scrollbar{width:6px}
+.main::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-inner{max-width:720px;margin:0 auto;padding:54px 32px 60px}
+
+/* Top Bar */
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.top-bar-left{display:flex;align-items:center;gap:10px}
+.top-bar-logo{width:34px;height:34px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.top-bar-logo::after{content:'TT';color:#fff;font-size:11px;font-weight:400;letter-spacing:-.5px}
+.top-bar-brand{font-size:15px;font-weight:400;color:var(--text);letter-spacing:-.3px}
+.top-bar-avatar{
+  width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0;cursor:pointer;
+  background:linear-gradient(135deg,#E8E8E8,#D0D0D0);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .15s;margin-left:auto;
+}
+.top-bar-avatar:hover{opacity:.8}
+.top-bar-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.top-bar-avatar .avatar-fallback{font-size:14px;font-weight:400;color:var(--text2)}
+.top-bar-spacer{height:38px;margin-bottom:24px}
+@media(min-width:768px){.top-bar-spacer{display:none}}
+
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:26px;font-weight:400;letter-spacing:-.5px;line-height:1.3}
+.page-header p{font-size:13px;color:var(--text3);margin-top:3px}
+
+/* Balance Card */
+.balance-card{background:var(--accent);border-radius:20px;padding:32px;color:#fff;margin-bottom:28px;position:relative;overflow:hidden}
+.balance-star{position:absolute;top:18px;right:18px;opacity:1;pointer-events:none}
+.balance-card::after{content:'';position:absolute;bottom:-60px;left:-30px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(255,255,255,.04)}
+.balance-label{font-size:12px;opacity:.6;letter-spacing:0.5px;font-weight:400}
+.balance-amount{font-family:'Poppins',sans-serif;font-size:46px;font-weight:400;margin:10px 0 2px;letter-spacing:-1.5px}
+.balance-cad{font-family:'Poppins',sans-serif;font-size:16px;font-weight:400;opacity:.7;margin-bottom:2px;letter-spacing:-.3px}
+.balance-sub{font-size:12px;opacity:.4;margin-top:2px}
+.balance-change{display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-top:14px;background:rgba(0,200,83,.15);color:#69F0AE;padding:5px 12px;border-radius:20px;font-weight:400}
+.balance-change svg{width:12px;height:12px}
+
+/* ─── Token Trends ─── */
+.trends-label{font-size:14px;font-weight:400;color:var(--text);margin-bottom:12px;letter-spacing:-.2px}
+.trends-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px 16px;margin-bottom:28px}
+.trends-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.trends-meta{display:flex;align-items:center;gap:8px}
+.trends-multiplier{font-family:'Poppins',sans-serif;font-size:22px;font-weight:400;letter-spacing:-.5px}
+.trends-multiplier.up{color:var(--green)}.trends-multiplier.down{color:var(--red)}.trends-multiplier.flat{color:var(--text)}
+.trends-delta{font-size:11px;font-weight:400;padding:3px 8px;border-radius:8px}
+.trends-delta.up{background:rgba(0,200,83,.1);color:var(--green)}
+.trends-delta.down{background:rgba(255,59,48,.1);color:var(--red)}
+
+/* CTA Banner */
+.cta-banner{background:#F0F0F0;border:1px solid #D8D8D8;border-radius:14px;padding:16px 20px;margin-top:16px;display:flex;align-items:flex-start;gap:12px}
+.cta-banner svg{width:18px;height:18px;flex-shrink:0;color:#888;margin-top:1px}
+.cta-banner p{font-size:12.5px;font-weight:400;color:var(--text2);line-height:1.55;letter-spacing:-.1px}
+
+/* Dropdown Pill Selector */
+.trend-selector{position:relative;z-index:10}
+.trend-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 14px 8px 16px;border-radius:24px;
+  background:var(--accent);color:#fff;
+  border:none;
+  font-size:13px;font-weight:400;cursor:pointer;
+  transition:all .2s;user-select:none;
+}
+.trend-pill:hover{background:#222}
+.trend-pill .pill-arrow{
+  display:inline-flex;transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.trend-pill .pill-arrow svg{width:14px;height:14px}
+.trend-pill.open .pill-arrow{transform:rotate(180deg)}
+.trend-dropdown{
+  position:absolute;top:calc(100% + 6px);left:0;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:4px;min-width:170px;
+  box-shadow:0 12px 40px rgba(0,0,0,.12);
+  opacity:0;transform:translateY(-6px) scale(.97);
+  pointer-events:none;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+.trend-dropdown.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.trend-option{
+  padding:10px 14px;border-radius:12px;cursor:pointer;
+  font-size:13px;font-weight:400;color:var(--text2);
+  transition:all .15s;
+}
+.trend-option:hover{background:rgba(0,0,0,.04);color:var(--text)}
+.trend-option.active{background:rgba(0,0,0,.06);color:var(--text);font-weight:400}
+.trends-canvas-wrap{position:relative;width:100%;height:150px}
+.trends-canvas-wrap canvas{width:100%;height:100%;display:block}
+.trends-models{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,0,0,.05)}
+.model-chip{
+  font-size:11px;font-family:'Poppins',sans-serif;font-weight:400;
+  padding:5px 10px;border-radius:8px;background:#F5F5F5;color:var(--text2);
+  display:inline-flex;align-items:center;gap:5px;line-height:1;
+}
+.model-chip .mc-rate{color:var(--text);font-weight:400}
+
+/* Section Title */
+.section-title{font-size:14px;font-weight:400;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;letter-spacing:-.2px}
+.section-title span{font-size:12px;color:var(--text3);font-weight:400;cursor:pointer;letter-spacing:0}
+
+/* Token Cards */
+.token-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.token-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s ease;position:relative}
+.token-card:hover{border-color:#ccc;box-shadow:var(--shadow)}
+.token-card.disabled{cursor:default}
+.token-card.disabled:hover{border-color:var(--border);box-shadow:none}
+.token-card.disabled .token-icon,.token-card.disabled .token-info{opacity:.5}
+.token-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:400;flex-shrink:0}
+.token-icon svg{width:24px;height:24px}
+.token-icon.claude,.token-icon.gemini,.token-icon.chatgpt,.token-icon.grok{background:#F0F0F0;color:#888}
+.token-info{flex:1;min-width:0}
+.token-name{font-size:15px;font-weight:400;color:var(--text);margin-bottom:2px}
+.token-provider{font-size:12px;color:var(--text3)}
+.token-right{text-align:right;flex-shrink:0}
+.token-value{font-family:'Poppins',sans-serif;font-size:15px;font-weight:400;color:var(--text);margin-bottom:1px}
+.token-cad{font-family:'Poppins',sans-serif;font-size:12px;font-weight:400;color:var(--text2);margin-bottom:1px}
+.token-mult{font-family:'Poppins',sans-serif;font-size:11px;font-weight:400}
+.token-mult.up{color:var(--green)}.token-mult.down{color:var(--red)}
+.status-pill{font-size:9.5px;font-weight:400;padding:2px 7px;border-radius:6px;letter-spacing:.3px;text-transform:none;white-space:nowrap;background:rgba(255,152,0,.12);border:1px solid rgba(255,152,0,.25);color:#E68A00}
+
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal-sheet{background:var(--card);border-radius:24px;width:420px;max-width:92vw;max-height:80vh;padding:28px 28px 36px;animation:modalIn .3s cubic-bezier(.32,.72,0,1);overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.15)}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-handle{width:36px;height:4px;background:#D9D9D9;border-radius:2px;margin:0 auto 22px;display:none}
+.modal-token-header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.modal-token-header .token-icon{width:56px;height:56px;font-size:22px}
+.modal-token-title h2{font-size:20px;font-weight:400;color:var(--text)}
+.modal-token-title p{font-size:13px;color:var(--text3)}
+.modal-balance-row{display:flex;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border)}
+.modal-balance-row:last-of-type{border-bottom:none}
+.mbr-label{font-size:14px;color:var(--text3)}
+.mbr-value{font-family:'Poppins',sans-serif;font-size:15px;font-weight:400;color:var(--text)}
+.trade-actions{display:flex;gap:10px;margin-top:22px}
+.trade-btn{flex:1;padding:14px;border-radius:14px;border:none;font-size:15px;font-weight:400;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.trade-btn.buy{background:var(--accent);color:#fff}.trade-btn.buy:hover{background:#222}
+.trade-btn.sell{background:#F5F5F5;color:var(--text);border:1px solid var(--border)}.trade-btn.sell:hover{background:#eee}
+.trade-input-section{margin-top:22px;display:none}
+.trade-input-section.active{display:block;animation:fadeIn .25s ease}
+.trade-input-label{font-size:12px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.trade-input-row{display:flex;gap:10px;margin-bottom:14px}
+.trade-input{flex:1;padding:14px 16px;border-radius:12px;border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:16px;outline:none;background:#FAFAFA;color:var(--text);transition:border-color .2s}
+.trade-input:focus{border-color:var(--accent)}
+.trade-input::placeholder{color:var(--text3)}
+.trade-unit{display:flex;align-items:center;padding:0 14px;background:#F0F0F0;border-radius:12px;font-size:13px;font-weight:400;color:var(--text2)}
+.trade-confirm{width:100%;padding:16px;border-radius:14px;border:none;font-size:15px;font-weight:400;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.trade-confirm.buy-confirm{background:var(--green);color:#fff}
+.trade-confirm.sell-confirm{background:var(--red);color:#fff}
+.trade-confirm:hover{opacity:.9;transform:scale(.99)}
+.trade-result{margin-top:12px;padding:14px;border-radius:12px;font-size:13px;font-weight:400;text-align:center;display:none}
+.trade-result.show{display:block;animation:fadeIn .3s ease}
+.trade-result:not(.error){background:#F5FFF5;border:1px solid rgba(0,200,83,.2);color:var(--green)}
+.trade-result.error{background:#FFF5F5;border:1px solid rgba(255,59,48,.2);color:var(--red)}
+
+/* Rewards */
+.reward-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.reward-stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.reward-stat label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:400}
+.reward-stat .val{font-family:'Poppins',sans-serif;font-size:56px;font-weight:400;color:var(--text);margin-top:8px}
+.reward-stat .sub{font-size:11px;color:var(--green);margin-top:2px;font-weight:400;display:flex;align-items:center;gap:3px}
+.reward-stat .sub svg{width:12px;height:12px}
+.date-group{margin-bottom:20px}
+.date-label{font-size:11px;font-weight:400;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:2px}
+.tx-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.04)}
+.tx-item:last-child{border-bottom:none}
+.tx-dot{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.tx-dot svg{width:20px;height:20px}
+.tx-dot.reward{background:#E8F5E9;color:var(--green)}.tx-dot.zero{background:#F5F5F5;color:var(--text3)}
+.tx-info{flex:1;min-width:0}
+.tx-title{font-size:14px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.tx-amount{text-align:right;flex-shrink:0}
+.tx-amount .val{font-family:'Poppins',sans-serif;font-size:14px;font-weight:400}
+.tx-amount .val.positive{color:var(--green)}.tx-amount .val.neutral{color:var(--text3)}
+.tx-amount .time{font-size:11px;color:var(--text3);margin-top:2px}
+.tx-hash{opacity:.45;margin-right:6px;font-size:11px;letter-spacing:.3px}
+
+/* Data Flow */
+.flow-mode-toggle{display:flex;gap:4px;margin-bottom:16px}
+.flow-mode-btn{padding:7px 16px;border-radius:20px;border:none;background:#F0F0F0;color:var(--text3);font-size:12px;font-weight:400;font-family:inherit;cursor:pointer;transition:all .2s}
+.flow-mode-btn.active{background:var(--accent);color:#fff}
+.flow-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 20px 16px;margin-bottom:28px}
+.flow-ring-wrap{display:flex;justify-content:center;padding:8px 0 12px;position:relative}
+.flow-ring-wrap canvas{max-width:200px;max-height:200px;width:100%;height:auto}
+.flow-ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.flow-slot{overflow:hidden;line-height:1}
+.flow-slot-number{height:30px}
+.flow-slot-label{height:14px}
+.flow-slot-track{transition:transform .45s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;align-items:center}
+.flow-slot-number span{display:block;height:30px;line-height:30px;font-family:'Poppins',sans-serif;font-size:26px;font-weight:400;color:var(--text);text-align:center}
+.flow-slot-label span{display:block;height:14px;line-height:14px;font-size:10px;font-weight:400;color:var(--text3);text-align:center}
+.flow-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,0,0,.05)}
+.flow-legend-item{font-size:10px;font-family:'Poppins',sans-serif;font-weight:400;padding:4px 9px;border-radius:8px;background:#F5F5F5;color:var(--text2);display:inline-flex;align-items:center;gap:5px;line-height:1}
+.flow-legend-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.flow-contrib-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.flow-contrib-icon{width:40px;height:40px;border-radius:12px;background:#F0F0F0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.flow-contrib-icon svg{width:20px;height:20px}
+.flow-contrib-info{flex:1;min-width:0}
+.flow-contrib-name{font-size:14px;font-weight:400;color:var(--text)}
+.flow-contrib-org{font-size:11.5px;color:var(--text3);margin-top:1px}
+.flow-contrib-right{text-align:right;flex-shrink:0}
+.flow-contrib-pct{font-family:'Poppins',sans-serif;font-size:15px;font-weight:400;color:var(--text)}
+.flow-contrib-tokens{font-size:11px;color:var(--text3);margin-top:2px}
+.flow-tx-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+.flow-tx-item:last-child{border-bottom:none}
+.flow-tx-dot{width:32px;height:32px;border-radius:10px;background:#F0F0F0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.flow-tx-dot svg{width:16px;height:16px;color:#888}
+.flow-tx-info{flex:1;min-width:0}
+.flow-tx-title{font-size:13px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flow-tx-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.flow-tx-dest{text-align:right;flex-shrink:0;font-size:11.5px;color:var(--text2);font-weight:400}
+.flow-tx-group-label{font-size:11px;font-weight:400;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:16px 0 8px 2px}
+.flow-tx-group-label:first-child{padding-top:4px}
+.flow-tx-privacy{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:400;padding:2px 7px;border-radius:6px;background:rgba(255,152,0,.12);color:#E68A00;border:1px solid rgba(255,152,0,.25);margin-left:6px;white-space:nowrap}
+
+/* Settings */
+.settings-group{margin-bottom:28px}
+.settings-group-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:400;margin-bottom:10px;padding-left:4px}
+.settings-item{display:flex;align-items:center;gap:16px;padding:16px 18px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.settings-item:hover{border-color:#ccc}
+.settings-icon{width:40px;height:40px;border-radius:12px;background:#F5F5F5;display:flex;align-items:center;justify-content:center}
+.settings-icon svg{width:20px;height:20px;color:var(--text)}
+.settings-label{flex:1;font-size:15px;font-weight:400;color:var(--text)}
+.settings-chevron{color:var(--text3);font-size:20px}
+
+/* Privacy Slider */
+.privacy-section{margin-bottom:24px}
+.privacy-section-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px}
+.privacy-section-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+.privacy-slider-wrap{position:relative;padding:0 10px;margin-bottom:8px}
+.privacy-slider-wrap input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(90deg,#D0D0D0,#A0A0A0);outline:none;cursor:pointer}
+.privacy-slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #888;box-shadow:0 1px 4px rgba(0,0,0,.15);cursor:pointer;transition:border-color .2s}
+.privacy-slider-wrap input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #888;box-shadow:0 1px 4px rgba(0,0,0,.15);cursor:pointer}
+.privacy-marks{display:flex;justify-content:space-between;padding:6px 0 0}
+.privacy-marks span{font-size:10px;color:var(--text3);font-weight:400;text-align:center;width:0;display:flex;justify-content:center}
+.privacy-rate{display:flex;align-items:center;justify-content:space-between;margin:14px 0 12px;padding:10px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.privacy-rate-label{font-size:12px;color:var(--text2)}
+.privacy-rate-value{font-size:18px;font-weight:500;color:var(--text);font-family:'Poppins',sans-serif;transition:transform .2s}
+.privacy-notice{font-size:11px;color:var(--text3);line-height:1.5;padding:10px 14px;background:rgba(0,0,0,.03);border-radius:10px;margin-bottom:16px;display:flex;align-items:flex-start;gap:8px}
+.privacy-notice svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;color:var(--text3)}
+.privacy-level-cta{background:#F0F0F0;border:1.5px solid #D8D8D8;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:4px;overflow:hidden}
+.privacy-level-cta-inner{display:flex;align-items:center;gap:12px;width:100%;transition:opacity .2s,transform .2s}
+.privacy-level-cta-icon{width:32px;height:32px;border-radius:8px;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.privacy-level-cta-icon svg{width:16px;height:16px;color:#666}
+.privacy-level-cta-body{flex:1;min-width:0}
+.privacy-level-cta-title{font-size:12.5px;font-weight:500;color:var(--text);margin-bottom:2px}
+.privacy-level-cta-desc{font-size:11px;font-weight:400;color:var(--text3);line-height:1.4}
+.privacy-level-cta-rate{font-size:13px;font-weight:500;color:var(--text);font-family:'Poppins',sans-serif;flex-shrink:0;padding-left:8px}
+.privacy-full-btn{display:none;width:100%;padding:14px 20px;border:none;border-radius:12px;background:#1A1A1A;color:#fff;font-size:11.5px;font-weight:400;font-family:inherit;cursor:pointer;text-align:center;line-height:1.5;transition:opacity .2s,transform .2s;margin-top:2px}
+.privacy-full-btn:active{opacity:.85;transform:scale(.98)}
+.privacy-full-btn span{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.55);margin-top:2px}
+
+/* Toast */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#fff;padding:13px 24px;border-radius:14px;font-size:14px;font-weight:400;z-index:300;opacity:0;transition:all .3s ease;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Animations */
+.token-card{animation:cardIn .4s ease backwards}
+.token-card:nth-child(1){animation-delay:.05s}.token-card:nth-child(2){animation-delay:.1s}.token-card:nth-child(3){animation-delay:.15s}.token-card:nth-child(4){animation-delay:.2s}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Desktop */
+@media(min-width:1024px){
+  .token-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .reward-summary{grid-template-columns:repeat(4,1fr)}
+  .page-inner{max-width:840px;padding:66px 40px 60px}
+  .balance-amount{font-size:56px}
+  .balance-cad{font-size:18px}
+  .balance-card{padding:36px 40px}
+  .trends-canvas-wrap{height:170px}
+}
+@media(min-width:768px){.top-bar{display:none}}
+@media(max-width:1023px) and (min-width:768px){:root{--sidebar-w:200px}.sidebar-brand small{display:none}}
+
+/* Mobile */
+@media(max-width:767px){
+  .sidebar{display:none}
+  .bottom-bar{display:block}
+  .page-inner{padding:36px 18px calc(80px + env(safe-area-inset-bottom,0px))}
+  .page-header h1{font-size:24px}
+  .balance-amount{font-size:40px}
+  .balance-cad{font-size:14px}
+  .balance-card{padding:24px}
+  .token-icon{width:44px;height:44px;font-size:18px}
+  .token-card{padding:16px;gap:12px}
+  .token-name{font-size:14px}.token-value{font-size:13px}.token-cad{font-size:10px}.token-mult{font-size:10px}
+  .reward-stat .val{font-size:44px}.reward-stat{padding:16px}
+  .tx-dot{width:36px;height:36px;border-radius:10px;font-size:14px}.tx-title{font-size:13px}
+  .toast{bottom:calc(80px + env(safe-area-inset-bottom,0px) + 12px)}
+  .modal-overlay{align-items:flex-end}
+  .modal-sheet{width:100%;max-width:100%;border-radius:24px 24px 0 0;max-height:80vh;padding:12px 22px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 40px rgba(0,0,0,.1);animation:slideUp .35s cubic-bezier(.32,.72,0,1)}
+  .modal-handle{display:block}
+  .trends-canvas-wrap{height:130px}
+  .trends-multiplier{font-size:18px}
+  .model-chip{font-size:10px;padding:3px 8px}
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(max-width:399px){.page-inner{padding:30px 14px calc(80px + env(safe-area-inset-bottom,0px))}.status-pill{font-size:9px;padding:4px 8px}.trends-tab{padding:6px 8px;font-size:10px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <img src="tokentrustlogo.svg" alt="TokenTrust Logo" style="height: 36px; padding: 4px 0; object-fit: contain;">
+    </div>
+    <div class="nav-item active" onclick="switchPage('home')" data-page="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="switchPage('rewards')" data-page="rewards">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>
+      <span class="nav-label">Return</span>
+    </div>
+    <div class="nav-item" onclick="switchPage('dataflow')" data-page="dataflow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+      <span class="nav-label">Data Flow</span>
+    </div>
+    <div class="nav-item" onclick="switchPage('settings')" data-page="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5.5"/><path d="m14.3 19.6 1-.4"/><path d="M15 3v7.5"/><path d="m15.2 16.9-.9-.3"/><path d="m16.6 21.7.3-.9"/><path d="m16.8 15.3-.4-1"/><path d="m19.1 15.2.3-.9"/><path d="m19.6 21.7-.4-1"/><path d="m20.7 16.8 1-.4"/><path d="m21.7 19.4-.9-.3"/><path d="M9 3v18"/><circle cx="18" cy="18" r="3"/></svg>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">AX</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Alex</div>
+        <div class="sidebar-user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7918151c01390d16121c170d0b0c0a0d571016">[email&#160;protected]</a></div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="page-inner">
+        <div class="top-bar">
+          <div class="top-bar-left">
+            <img src="tokentrustlogo.svg" alt="TokenTrust Logo" style="height: 28px; object-fit: contain;">
+          </div>
+          <div class="top-bar-avatar" onclick="switchPage('settings')">
+            <span class="avatar-fallback">AX</span>
+          </div>
+        </div>
+        <div class="page-header">
+          <h1 id="greeting"></h1>
+          <p>Overview</p>
+        </div>
+        <div class="balance-card">
+          <svg class="balance-star" width="60" height="60" viewBox="2854 1246 434 452" xmlns="http://www.w3.org/2000/svg"><path d="M3173.97 1261.07 3105.04 1433.89 3271.83 1362.1 3288 1399.33 3120.36 1471.11 3288 1542.9 3271.83 1579.24 3105.04 1507.45 3173.97 1681.16 3139.08 1698 3070.15 1523.4 3001.22 1698 2966.33 1681.16 3034.41 1507.45 2868.47 1579.24 2854 1542.9 3019.94 1471.11 2854 1399.33 2868.47 1362.99 3034.41 1433.89 2966.33 1261.07 3001.22 1246 3070.15 1418.82 3139.08 1246 3173.97 1261.07Z" fill="#fff" fill-rule="evenodd"/></svg>
+          <div class="balance-label">Total balance</div>
+          <div class="balance-amount" id="totalBalance">2.47M</div>
+          <div class="balance-cad" id="totalCad">$29.02 CAD</div>
+          <div class="balance-sub">Token Holdings · Demand-Weighted</div>
+          <div class="balance-change" id="totalChange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> +12.4% this month</div>
+        </div>
+
+        <div class="section-title">Active Tokens <span>View all ›</span></div>
+        <div class="token-list" id="tokenList"></div>
+
+        <!-- Token Trends -->
+        <div class="trends-label">Token Trends</div>
+        <div class="trends-card">
+          <div class="trends-header">
+            <div class="trend-selector">
+              <div class="trend-pill" id="trendPill" onclick="toggleDropdown()">
+                <span id="trendPillLabel">Claude</span>
+                <span class="pill-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+              </div>
+              <div class="trend-dropdown" id="trendDropdown"></div>
+            </div>
+            <div class="trends-meta">
+              <span class="trends-multiplier" id="trendsMult">×2.74</span>
+              <span class="trends-delta" id="trendsDelta">+18.2%</span>
+            </div>
+          </div>
+          <div class="trends-canvas-wrap">
+            <canvas id="trendsChart"></canvas>
+          </div>
+          <div class="trends-models" id="trendsModels"></div>
+        </div>
+
+        <div class="cta-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <p>Your Claude token holdings are high and Claude token value is elevated — consider switching to Gemini to optimize your balance efficiency.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="page" id="page-rewards">
+      <div class="page-inner">
+        <div class="top-bar-spacer"></div>
+        <div class="page-header"><h1>Return</h1><p>Chat-based refund history</p></div>
+        <div class="reward-summary">
+          <div class="reward-stat"><label>Total Earned</label><div class="val" id="totalEarned">0</div><div class="sub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> lifetime</div></div>
+          <div class="reward-stat"><label>This Month</label><div class="val" id="monthEarned">0</div><div class="sub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> from data</div></div>
+        </div>
+        <div class="section-title">Transaction History <span>20 records</span></div>
+        <div id="rewardsList"></div>
+      </div>
+    </div>
+
+    <!-- DATA FLOW -->
+    <div class="page" id="page-dataflow">
+      <div class="page-inner">
+        <div class="top-bar-spacer"></div>
+        <div class="page-header"><h1>Data Flow</h1><p>Where your data contributes</p></div>
+        <div class="flow-mode-toggle">
+          <button class="flow-mode-btn active" id="flowModeDestBtn" onclick="setFlowMode('dest')">Destinations</button>
+          <button class="flow-mode-btn" id="flowModeUsageBtn" onclick="setFlowMode('usage')">Data Usage</button>
+        </div>
+        <div class="flow-card">
+          <div class="flow-ring-wrap">
+            <canvas id="flowRingChart" width="200" height="200"></canvas>
+            <div class="flow-ring-center">
+              <div class="flow-slot flow-slot-number"><div class="flow-slot-track" id="flowSlotNumber"><span>7</span></div></div>
+              <div class="flow-slot flow-slot-label"><div class="flow-slot-track" id="flowSlotLabel"><span>destinations</span></div></div>
+            </div>
+          </div>
+          <div class="flow-legend" id="flowLegend"></div>
+        </div>
+        <div class="section-title" id="flowSectionTitle">Research Contributions <span id="flowContribCount"></span></div>
+        <div id="flowContribList"></div>
+        <div class="section-title" style="margin-top:28px">Recent Data Transfers <span id="flowTxCount"></span></div>
+        <div id="flowTxList"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-inner">
+        <div class="top-bar-spacer"></div>
+        <div class="page-header"><h1>Settings</h1><p>Account preferences</p></div>
+        <div class="settings-group">
+          <div class="settings-group-title">Account</div>
+          <div class="settings-item"><div class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="settings-label">Profile</span><span class="settings-chevron">›</span></div>
+        </div>
+        <div class="settings-group">
+          <div class="settings-group-title">Data</div>
+          <div class="privacy-section">
+            <div class="privacy-section-title">Privacy Level</div>
+            <div class="privacy-section-sub">Control how much data you share for token rewards</div>
+            <div class="privacy-notice">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Sensitive data (SSN, financial information, medical records) is always encrypted and protected regardless of your privacy level.</span>
+            </div>
+            <div class="privacy-slider-wrap">
+              <input type="range" min="0" max="100" step="25" value="50" id="privacySlider" oninput="updatePrivacyLevel(this.value)">
+              <div class="privacy-marks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+            </div>
+            <div class="privacy-rate">
+              <span class="privacy-rate-label">Potential Token Reward Rate</span>
+              <span class="privacy-rate-value" id="privacyRateValue">1.0x</span>
+            </div>
+            <div class="privacy-level-cta" id="privacyLevelCta">
+              <div class="privacy-level-cta-inner" id="privacyCtaInner">
+                <div class="privacy-level-cta-icon" id="privacyCtaIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+                <div class="privacy-level-cta-body">
+                  <div class="privacy-level-cta-title" id="privacyCtaTitle">Balanced Privacy</div>
+                  <div class="privacy-level-cta-desc" id="privacyCtaDesc">Standard data sharing with fair token compensation</div>
+                </div>
+                <div class="privacy-level-cta-rate" id="privacyCtaRate">1.0x</div>
+              </div>
+            </div>
+            <button class="privacy-full-btn" id="privacyFullBtn" onclick="showToast('Full protection mode activated')">Need complete security?<span>No token reward, full data protection</span></button>
+          </div>
+          <div class="settings-item"><div class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 12h8"/><path d="M10 11v2"/><path d="M8 17h8"/><path d="M14 16v2"/></svg></div><span class="settings-label">Data Preferences</span><span class="settings-chevron">›</span></div>
+          <div class="settings-item"><div class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.941 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.704l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v3.512"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M4.017 11.512a6 6 0 1 0 8.466 8.475"/><path d="M9 16a1 1 0 0 1-1-1v-4c0-.552.45-1.008.995-.917a6 6 0 0 1 4.922 4.922c.091.544-.365.995-.917.995z"/></svg></div><span class="settings-label">Refund Analytics</span><span class="settings-chevron">›</span></div>
+        </div>
+        <div class="settings-group">
+          <div class="settings-group-title">About</div>
+          <div class="settings-item"><div class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div><span class="settings-label">Version 1.0.2</span><span class="settings-chevron">›</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="bottom-bar"><div class="bottom-bar-inner">
+    <div class="tab-item active" onclick="switchPage('home')" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg><span class="tab-label">Dashboard</span></div>
+    <div class="tab-item" onclick="switchPage('rewards')" data-tab="rewards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2"/><path d="M3 11h3c.8 0 1.6.3 2.1.9l1.1.9c1.6 1.6 4.1 1.6 5.7 0l1.1-.9c.5-.5 1.3-.9 2.1-.9H21"/></svg><span class="tab-label">Return</span></div>
+    <div class="tab-item" onclick="switchPage('dataflow')" data-tab="dataflow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg><span class="tab-label">Data Flow</span></div>
+    <div class="tab-item" onclick="switchPage('settings')" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 10.27 7 3.34"/><path d="m11 13.73-4 6.93"/><path d="M12 22v-2"/><path d="M12 2v2"/><path d="M14 12h8"/><path d="m17 20.66-1-1.73"/><path d="m17 3.34-1 1.73"/><path d="M2 12h2"/><path d="m20.66 17-1.73-1"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m3.34 7 1.73 1"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="8"/></svg><span class="tab-label">Settings</span></div>
+  </div></div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ═══ TOKEN DATA WITH DEMAND-BASED MULTIPLIERS ═══
+const tokens = [
+  {
+    id:'claude', name:'anthropic-claude', provider:'Anthropic', icon:'<svg viewBox="0 6.603 1192.672 1193.397" xmlns="http://www.w3.org/2000/svg"><path d="m233.96 800.215 234.684-131.678 3.947-11.436-3.947-6.363h-11.436l-39.221-2.416-134.094-3.624-116.296-4.832-112.67-6.04-28.35-6.04-26.577-35.035 2.738-17.477 23.84-16.027 34.147 2.98 75.463 5.155 113.235 7.812 82.147 4.832 121.692 12.644h19.329l2.738-7.812-6.604-4.832-5.154-4.832-117.182-79.41-126.845-83.92-66.443-48.321-35.92-24.484-18.12-22.953-7.813-50.093 32.618-35.92 43.812 2.98 11.195 2.98 44.375 34.147 94.792 73.37 123.786 91.167 18.12 15.06 7.249-5.154.886-3.624-8.135-13.61-67.329-121.692-71.838-123.785-31.974-51.302-8.456-30.765c-2.98-12.645-5.154-23.275-5.154-36.242l37.127-50.416 20.537-6.604 49.53 6.604 20.86 18.121 30.765 70.39 49.852 110.818 77.315 150.684 22.631 44.698 12.08 41.396 4.51 12.645h7.813v-7.248l6.362-84.886 11.759-104.215 11.436-134.094 3.946-37.772 18.685-45.262 37.127-24.482 28.994 13.852 23.839 34.148-3.303 22.067-14.174 92.134-27.785 144.323-18.121 96.644h10.55l12.08-12.08 48.887-64.913 82.147-102.685 36.242-40.752 42.282-45.02 27.14-21.423h51.303l37.772 56.135-16.913 57.986-52.832 67.007-43.812 56.779-62.82 84.563-39.22 67.651 3.623 5.396 9.343-.886 141.906-30.201 76.671-13.852 91.49-15.705 41.396 19.329 4.51 19.65-16.269 40.189-97.852 24.16-114.764 22.954-170.9 40.43-2.093 1.53 2.416 2.98 76.993 7.248 32.94 1.771h80.617l150.12 11.195 39.222 25.933 23.517 31.732-3.946 24.16-60.403 30.766-81.503-19.33-190.228-45.26-65.235-16.27h-9.02v5.397l54.362 53.154 99.624 89.96 124.752 115.973 6.362 28.671-16.027 22.63-16.912-2.415-109.611-82.47-42.282-37.127-95.758-80.618h-6.363v8.456l22.067 32.296 116.537 175.167 6.04 53.719-8.456 17.476-30.201 10.55-33.181-6.04-68.215-95.758-70.39-107.84-56.778-96.644-6.926 3.947-33.503 360.886-15.705 18.443-36.243 13.852-30.201-22.953-16.027-37.127 16.027-73.37 19.329-95.758 15.704-76.107 14.175-94.55 8.456-31.41-.563-2.094-6.927.886-71.275 97.852-108.402 146.497-85.772 91.812-20.537 8.134-35.597-18.443 3.301-32.94 19.893-29.315 118.712-151.007 71.597-93.583 46.228-54.04-.322-7.813h-2.738l-315.302 204.725-56.135 7.248-24.16-22.63 2.98-37.128 11.435-12.08 94.792-65.236-.322.323z" fill="#666"/></svg>', iconClass:'claude',
+    balance:0.82, status:'active', color:'#D4845E',
+    models:[
+      {name:'Haiku 4.5', baseRate:5.00, mult:1.8},
+      {name:'Sonnet 4.6', baseRate:15.00, mult:2.4},
+      {name:'Opus 4.6', baseRate:25.00, mult:2.74}
+    ],
+    trend: generateTrend(2.1, 2.74, 'bull')
+  },
+  {
+    id:'gemini', name:'google-gemini', provider:'Google DeepMind', icon:'<svg viewBox="0 0 65 65" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M32.447 0c.68 0 1.273.465 1.439 1.125a38.904 38.904 0 001.999 5.905c2.152 5 5.105 9.376 8.854 13.125 3.751 3.75 8.126 6.703 13.125 8.855a38.98 38.98 0 005.906 1.999c.66.166 1.124.758 1.124 1.438 0 .68-.464 1.273-1.125 1.439a38.902 38.902 0 00-5.905 1.999c-5 2.152-9.375 5.105-13.125 8.854-3.749 3.751-6.702 8.126-8.854 13.125a38.973 38.973 0 00-2 5.906 1.485 1.485 0 01-1.438 1.124c-.68 0-1.272-.464-1.438-1.125a38.913 38.913 0 00-2-5.905c-2.151-5-5.103-9.375-8.854-13.125-3.75-3.749-8.125-6.702-13.125-8.854a38.973 38.973 0 00-5.905-2A1.485 1.485 0 010 32.448c0-.68.465-1.272 1.125-1.438a38.903 38.903 0 005.905-2c5-2.151 9.376-5.104 13.125-8.854 3.75-3.749 6.703-8.125 8.855-13.125a38.972 38.972 0 001.999-5.905A1.485 1.485 0 0132.447 0z" fill="#666"/></svg>', iconClass:'gemini',
+    balance:0.71, status:'active', color:'#4285F4',
+    models:[
+      {name:'2.5 Flash', baseRate:2.50, mult:1.5},
+      {name:'2.5 Pro', baseRate:10.00, mult:2.0},
+      {name:'3.1 Pro', baseRate:12.00, mult:2.31}
+    ],
+    trend: generateTrend(1.8, 2.31, 'steady')
+  },
+  {
+    id:'chatgpt', name:'openai-chatgpt', provider:'OpenAI', icon:'<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2"><path d="M474.123 209.81c11.525-34.577 7.569-72.423-10.838-103.904-27.696-48.168-83.433-72.94-137.794-61.414a127.14 127.14 0 00-95.475-42.49c-55.564 0-104.936 35.781-122.139 88.593-35.781 7.397-66.574 29.76-84.637 61.414-27.868 48.167-21.503 108.72 15.826 150.007-11.525 34.578-7.569 72.424 10.838 103.733 27.696 48.34 83.433 73.111 137.966 61.585 24.084 27.18 58.833 42.835 95.303 42.663 55.564 0 104.936-35.782 122.139-88.594 35.782-7.397 66.574-29.76 84.465-61.413 28.04-48.168 21.676-108.722-15.654-150.008v-.172zm-39.567-87.218c11.01 19.267 15.139 41.803 11.354 63.65-.688-.516-2.064-1.204-2.924-1.72l-101.152-58.49a16.965 16.965 0 00-16.687 0L206.621 194.5v-50.232l97.883-56.597c45.587-26.32 103.732-10.666 130.052 34.921zm-227.935 104.42l49.888-28.9 49.887 28.9v57.63l-49.887 28.9-49.888-28.9v-57.63zm23.223-191.81c22.364 0 43.867 7.742 61.07 22.02-.688.344-2.064 1.204-3.097 1.72L186.666 117.26c-5.161 2.925-8.258 8.43-8.258 14.45v136.934l-43.523-25.116V130.333c0-52.64 42.491-95.13 95.131-95.302l-.172.172zM52.14 168.697c11.182-19.268 28.557-34.062 49.544-41.803V247.14c0 6.02 3.097 11.354 8.258 14.45l118.354 68.295-43.695 25.288-97.711-56.425c-45.415-26.32-61.07-84.465-34.75-130.052zm26.665 220.71c-11.182-19.095-15.139-41.802-11.354-63.65.688.516 2.064 1.204 2.924 1.72l101.152 58.49a16.965 16.965 0 0016.687 0l118.354-68.467v50.232l-97.883 56.425c-45.587 26.148-103.732 10.665-130.052-34.75h.172zm204.54 87.39c-22.192 0-43.867-7.741-60.898-22.02a62.439 62.439 0 003.097-1.72l101.152-58.317c5.16-2.924 8.429-8.43 8.257-14.45V243.527l43.523 25.116v113.022c0 52.64-42.663 95.303-95.131 95.303v-.172zM461.22 343.303c-11.182 19.267-28.729 34.061-49.544 41.63V264.687c0-6.021-3.097-11.526-8.257-14.45L284.893 181.77l43.523-25.116 97.883 56.424c45.587 26.32 61.07 84.466 34.75 130.053l.172.172z" fill-rule="nonzero" fill="#666"/></svg>', iconClass:'chatgpt',
+    balance:0.58, status:'pending', color:'#10A37F',
+    models:[
+      {name:'GPT-4o mini', baseRate:0.60, mult:0.6},
+      {name:'GPT-4o', baseRate:10.00, mult:0.8},
+      {name:'GPT-5.2', baseRate:14.00, mult:0.72}
+    ],
+    trend: generateTrend(1.9, 0.72, 'crash')
+  },
+  {
+    id:'grok', name:'xai-grok', provider:'xAI', icon:'<svg viewBox="0 0 512 492" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M197.76 315.52l170.197-125.803c8.342-6.186 20.267-3.776 24.256 5.803 20.907 50.539 11.563 111.253-30.08 152.939-41.621 41.685-99.562 50.816-152.512 29.994l-57.834 26.816c82.965 56.768 183.701 42.731 246.656-20.33 49.941-50.006 65.408-118.166 50.944-179.627l.128.149c-20.971-90.282 5.162-126.378 58.666-200.17 1.28-1.75 2.56-3.499 3.819-5.291l-70.421 70.507v-.214l-243.883 245.27m-35.072 30.528c-59.563-56.96-49.28-145.088 1.515-195.926 37.568-37.61 99.136-52.97 152.874-30.4l57.707-26.666a166.554 166.554 0 00-39.019-21.334 191.467 191.467 0 00-208.042 41.942c-54.038 54.101-71.04 137.301-41.856 208.298 21.802 53.056-13.931 90.582-49.92 128.47C23.104 463.915 10.304 477.333 0 491.541l162.56-145.386" fill="#666"/></svg>', iconClass:'grok',
+    balance:0.36, status:'disconnected', color:'#E53935',
+    models:[
+      {name:'Grok 3 mini', baseRate:0.50, mult:0.3},
+      {name:'Grok 3', baseRate:5.00, mult:0.45},
+      {name:'Grok 4.1', baseRate:3.00, mult:0.38}
+    ],
+    trend: generateTrend(0.55, 0.38, 'decline')
+  }
+];
+
+// ═══ TREND GENERATION ═══
+function generateTrend(start, end, shape) {
+  const pts = [];
+  for (let i = 0; i < 30; i++) {
+    const t = i / 29;
+    let base;
+    if (shape === 'bull') {
+      // Accelerating rise with dips
+      base = start + (end - start) * (t * t * 0.4 + t * 0.6);
+    } else if (shape === 'steady') {
+      // Gradual linear rise with minor waves
+      base = start + (end - start) * t;
+    } else if (shape === 'crash') {
+      // Held steady first 15 days, then sharp decline
+      if (t < 0.5) base = start + (start * 0.05) * Math.sin(t * 6);
+      else base = start - (start - end) * ((t - 0.5) / 0.5) * ((t - 0.5) / 0.5);
+    } else if (shape === 'decline') {
+      // Gradual steady decline with small bounces
+      base = start + (end - start) * (t * 0.7 + t * t * 0.3);
+    } else {
+      // Flat / low with slight drift
+      base = start + (end - start) * t;
+    }
+    // Add noise
+    const noise = (Math.random() - 0.5) * 0.08;
+    pts.push(Math.max(0.1, +(base + noise).toFixed(3)));
+  }
+  // Ensure last point is exact
+  pts[29] = end;
+  return pts;
+}
+
+let activeChart = 'claude';
+
+const tokenLabels = {claude:'Claude',gemini:'Gemini',chatgpt:'ChatGPT',grok:'Grok'};
+let dropdownOpen = false;
+
+function renderDropdown() {
+  const dd = document.getElementById('trendDropdown');
+  dd.innerHTML = tokens.map(t => {
+    const label = tokenLabels[t.id];
+    const isCurrent = t.id === activeChart;
+    return `<div class="trend-option ${isCurrent ? 'active' : ''}" onclick="selectChart('${t.id}')">${label}</div>`;
+  }).join('');
+  document.getElementById('trendPillLabel').textContent = tokenLabels[activeChart];
+}
+
+function toggleDropdown() {
+  dropdownOpen = !dropdownOpen;
+  document.getElementById('trendPill').classList.toggle('open', dropdownOpen);
+  document.getElementById('trendDropdown').classList.toggle('open', dropdownOpen);
+}
+
+function closeDropdown() {
+  dropdownOpen = false;
+  document.getElementById('trendPill').classList.remove('open');
+  document.getElementById('trendDropdown').classList.remove('open');
+}
+
+function selectChart(id) {
+  activeChart = id;
+  closeDropdown();
+  renderDropdown();
+  drawChart();
+  updateTrendsMeta();
+  renderModelsChips();
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.trend-selector')) closeDropdown();
+});
+
+function updateTrendsMeta() {
+  const t = tokens.find(x => x.id === activeChart);
+  const trend = t.trend;
+  const current = trend[29];
+  const prev = trend[0];
+  const delta = ((current - prev) / prev * 100).toFixed(1);
+  const isUp = current >= prev;
+
+  const multEl = document.getElementById('trendsMult');
+  multEl.textContent = '×' + current.toFixed(2);
+  multEl.className = 'trends-multiplier ' + (isUp ? 'up' : 'down');
+
+  const deltaEl = document.getElementById('trendsDelta');
+  deltaEl.textContent = (isUp ? '+' : '') + delta + '%';
+  deltaEl.className = 'trends-delta ' + (isUp ? 'up' : 'down');
+}
+
+function renderModelsChips() {
+  const t = tokens.find(x => x.id === activeChart);
+  document.getElementById('trendsModels').innerHTML = t.models.map(m => {
+    return `<div class="model-chip">${m.name} <span class="mc-rate">$${m.baseRate.toFixed(0)}/1M</span> <span style="opacity:.45">×${m.mult.toFixed(1)}</span></div>`;
+  }).join('');
+}
+
+function drawChart() {
+  const canvas = document.getElementById('trendsChart');
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const t = tokens.find(x => x.id === activeChart);
+  const data = t.trend;
+  const pad = { top: 12, bottom: 10, left: 8, right: 8 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+
+  const rawMin = Math.min(...data);
+  const rawMax = Math.max(...data);
+  const range = rawMax - rawMin || 0.1;
+  const min = rawMin - range * 0.12;
+  const max = rawMax + range * 0.12;
+
+  function xPos(i) { return pad.left + (i / 29) * cw; }
+  function yPos(v) { return pad.top + ch - ((v - min) / (max - min)) * ch; }
+
+  // Grid lines only
+  ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const gy = pad.top + (ch / 3) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(w - pad.right, gy); ctx.stroke();
+  }
+
+  const isUp = data[29] >= data[0];
+  const lineColor = isUp ? '#00C853' : '#FF3B30';
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, yPos(max), 0, h);
+  grad.addColorStop(0, isUp ? 'rgba(0,200,83,.12)' : 'rgba(255,59,48,.12)');
+  grad.addColorStop(1, isUp ? 'rgba(0,200,83,.01)' : 'rgba(255,59,48,.01)');
+
+  // Build smooth path
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(data[0]));
+  for (let i = 1; i < 30; i++) {
+    const cx1 = (xPos(i - 1) + xPos(i)) / 2;
+    const cx2 = cx1;
+    ctx.bezierCurveTo(cx1, yPos(data[i - 1]), cx2, yPos(data[i]), xPos(i), yPos(data[i]));
+  }
+
+  // Fill
+  ctx.lineTo(xPos(29), pad.top + ch);
+  ctx.lineTo(xPos(0), pad.top + ch);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(data[0]));
+  for (let i = 1; i < 30; i++) {
+    const cx1 = (xPos(i - 1) + xPos(i)) / 2;
+    const cx2 = cx1;
+    ctx.bezierCurveTo(cx1, yPos(data[i - 1]), cx2, yPos(data[i]), xPos(i), yPos(data[i]));
+  }
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // End dot
+  ctx.beginPath();
+  ctx.arc(xPos(29), yPos(data[29]), 4, 0, Math.PI * 2);
+  ctx.fillStyle = lineColor;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(xPos(29), yPos(data[29]), 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+}
+
+// ═══ HELPERS ═══
+function calcCad(t) {
+  // balance is in M, baseRate is $/1M tokens → balance × rate = $ value
+  const flagship = t.models[t.models.length - 1];
+  return t.balance * flagship.baseRate;
+}
+function formatCad(v) {
+  if (v >= 1000) return '$' + (v / 1000).toFixed(1) + 'k';
+  if (v >= 100) return '$' + v.toFixed(0);
+  return '$' + v.toFixed(2);
+}
+
+// ═══ TOKEN LIST ═══
+function renderTokens() {
+  document.getElementById('tokenList').innerHTML = tokens.map(t => {
+    const dis = t.status !== 'active';
+    let pill = '';
+    if (t.status === 'disconnected') pill = '<span class="status-pill">Not Connected</span>';
+    else if (t.status === 'pending') pill = '<span class="status-pill">Pending Approval</span>';
+
+    const flagship = t.models[t.models.length - 1];
+    const cad = calcCad(t);
+    const isUp = flagship.mult >= 1.0;
+    const multHTML = `<div class="token-value">${formatCad(cad)} CAD</div><div class="token-cad">${t.balance.toFixed(2)}M · $${flagship.baseRate.toFixed(0)}/1M</div><div class="token-mult ${isUp ? 'up' : 'down'}">×${flagship.mult.toFixed(2)} ${isUp ? '↑' : '↓'}</div>`;
+    const right = pill || multHTML;
+
+    return `<div class="token-card ${dis ? 'disabled' : ''}" onclick="${dis ? '' : `openTokenModal('${t.id}')`}">
+      <div class="token-icon ${t.iconClass}">${t.icon}</div>
+      <div class="token-info"><div class="token-name">${t.name}</div><div class="token-provider">${t.provider}</div></div>
+      <div class="token-right">${right}</div></div>`;
+  }).join('');
+}
+
+// ═══ REWARDS ═══
+const chatLogs=["Debugging Python async pipeline","Legal contract review Q3","Marketing copy for Series B","Translate memo EN→FR","Code review: auth module","Research semiconductor exports","Draft investor update email","Analyze competitor pricing data","Summarize board meeting notes","Generate unit test suite","Healthcare compliance audit","Product roadmap brainstorm","Customer support FAQ update","Financial modeling — DCF","API documentation rewrite","Brand voice guidelines draft","Data pipeline architecture","UX research synthesis report","Security vulnerability scan","Quarterly OKR alignment","Supply chain optimization model","Technical interview prep Q&A","Patent prior art search","ESG reporting framework","ML model fine-tuning logs","Content localization JP market","Risk assessment matrix build","Social media strategy Q4","Database schema migration plan","Employee onboarding workflow"];
+const providers=['anthropic-claude','google-gemini','openai-chatgpt'];
+function genHash(){const c='0123456789ABCDEF';let a='',b='';for(let i=0;i<4;i++){a+=c[Math.floor(Math.random()*16)];b+=c[Math.floor(Math.random()*16)]}return a+'-'+b}
+function generateReward(){const r=Math.random()*100;if(r<50)return 0;if(r<80)return 50000;if(r<95)return 100000;if(r<99)return 500000;return 1000000}
+function formatReward(v){if(v===0)return'0';if(v>=1000000)return(v/1000000).toFixed(0)+'M';return(v/1000).toFixed(0)+'K'}
+function generateTransactions(){const txs=[];const now=new Date();for(let i=0;i<20;i++){const d=new Date(now);d.setDate(d.getDate()-Math.floor(i/4));d.setHours(Math.floor(Math.random()*14)+8,Math.floor(Math.random()*60));txs.push({log:chatLogs[Math.floor(Math.random()*chatLogs.length)],provider:providers[Math.floor(Math.random()*providers.length)],reward:generateReward(),date:d})}return txs.sort((a,b)=>b.date-a.date)}
+const transactions=generateTransactions();
+const zeroTxs=transactions.filter(tx=>tx.reward===0);
+zeroTxs.forEach(tx=>{tx.privacy=Math.random()<0.2});
+if(zeroTxs.length>0&&!zeroTxs.some(tx=>tx.privacy))zeroTxs[Math.floor(Math.random()*zeroTxs.length)].privacy=true;
+
+function renderRewards(){
+  const c=document.getElementById('rewardsList');let totalAll=0,totalMonth=0;const now=new Date();const groups={};
+  transactions.forEach(tx=>{totalAll+=tx.reward;if(tx.date.getMonth()===now.getMonth())totalMonth+=tx.reward;const today=new Date();today.setHours(0,0,0,0);const txDay=new Date(tx.date);txDay.setHours(0,0,0,0);const diff=Math.floor((today-txDay)/86400000);let label;if(diff===0)label='Today';else if(diff===1)label='Yesterday';else label=tx.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});if(!groups[label])groups[label]=[];groups[label].push(tx)});
+  document.getElementById('totalEarned').textContent=formatReward(totalAll)||'0';
+  document.getElementById('monthEarned').textContent=formatReward(totalMonth)||'0';
+  c.innerHTML=Object.entries(groups).map(([label,txs])=>`<div class="date-group"><div class="date-label">${label}</div>${txs.map(tx=>{const z=tx.reward===0;const ts=tx.date.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});return`<div class="tx-item"><div class="tx-dot ${z?'zero':'reward'}">${z?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5"/><path d="m17 17 5 5"/><path d="M18 12h.01"/><path d="m22 17-5 5"/><path d="M6 12h.01"/><circle cx="12" cy="12" r="2"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5"/><path d="m16 19 3 3 3-3"/><path d="M18 12h.01"/><path d="M19 16v6"/><path d="M6 12h.01"/><circle cx="12" cy="12" r="2"/></svg>'}</div><div class="tx-info"><div class="tx-title">${tx.log}</div><div class="tx-sub">${tx.provider}</div></div><div class="tx-amount"><div class="val ${z?'neutral':'positive'}">${z?'0 TK':'+'+formatReward(tx.reward)+' TK'}</div><div class="time"><span class="tx-hash">${genHash()}</span>${ts}</div></div></div>`}).join('')}</div>`).join('');
+}
+
+// ═══ MODAL ═══
+function openTokenModal(id){
+  const t=tokens.find(x=>x.id===id);if(!t||t.status!=='active')return;
+  const flagship=t.models[t.models.length-1];
+  const cadVal = calcCad(t);
+  const cadStr = formatCad(cadVal);
+  const modelsHTML=t.models.map(m=>{
+    const mCad = t.balance * m.baseRate;
+    return `<div class="modal-balance-row"><span class="mbr-label">${m.name} <span style="opacity:.5">×${m.mult.toFixed(1)}</span></span><span class="mbr-value">${formatCad(mCad)} <span style="font-size:11px;color:var(--text3);font-weight:400">· $${m.baseRate.toFixed(2)}/1M</span></span></div>`;
+  }).join('');
+
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-token-header"><div class="token-icon ${t.iconClass}">${t.icon}</div><div class="modal-token-title"><h2>${t.name}</h2><p>${t.provider} · Active</p></div></div>
+    <div class="modal-balance-row"><span class="mbr-label">Token Balance</span><span class="mbr-value">${t.balance.toFixed(2)}M tokens</span></div>
+    <div class="modal-balance-row"><span class="mbr-label">Demand Index</span><span class="mbr-value" style="color:${flagship.mult>=1?'var(--green)':'var(--red)'}">×${flagship.mult.toFixed(2)}</span></div>
+    <div class="modal-balance-row"><span class="mbr-label">Weighted Value</span><span class="mbr-value">${cadStr} CAD</span></div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:400">Model Rates</div>${modelsHTML}</div>
+    <div class="trade-actions"><button class="trade-btn buy" onclick="showTradeInput('${t.id}','buy')">Buy</button><button class="trade-btn sell" onclick="showTradeInput('${t.id}','sell')">Sell</button></div>
+    <div class="trade-input-section" id="tradeSection"><div class="trade-input-label" id="tradeLabel">Amount</div><div class="trade-input-row"><input class="trade-input" id="tradeAmount" type="number" placeholder="0.00" step="0.01" min="0"/><div class="trade-unit">M CAD</div></div><button class="trade-confirm buy-confirm" id="tradeConfirmBtn" onclick="executeTrade()">Confirm</button><div class="trade-result" id="tradeResult"></div></div>`;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+let currentTradeToken=null,currentTradeType=null;
+function showTradeInput(id,type){currentTradeToken=id;currentTradeType=type;const s=document.getElementById('tradeSection'),l=document.getElementById('tradeLabel'),b=document.getElementById('tradeConfirmBtn'),r=document.getElementById('tradeResult');s.classList.add('active');l.textContent=type==='buy'?'Buy Amount':'Sell Amount';b.className=`trade-confirm ${type==='buy'?'buy-confirm':'sell-confirm'}`;b.textContent=type==='buy'?'Confirm Buy':'Confirm Sell';r.classList.remove('show');document.getElementById('tradeAmount').value='';document.getElementById('tradeAmount').focus()}
+function executeTrade(){const amt=parseFloat(document.getElementById('tradeAmount').value);const r=document.getElementById('tradeResult'),t=tokens.find(x=>x.id===currentTradeToken);if(!amt||amt<=0){r.className='trade-result show error';r.textContent='Please enter a valid amount';return}if(currentTradeType==='sell'&&amt>t.balance){r.className='trade-result show error';r.textContent='Insufficient balance';return}if(currentTradeType==='buy')t.balance+=amt;else t.balance-=amt;updateTotalBalance();r.className='trade-result show';r.textContent=`✓ ${currentTradeType==='buy'?'Bought':'Sold'} ${amt.toFixed(2)}M CAD of ${t.name}`;setTimeout(()=>renderTokens(),600)}
+function updateTotalBalance(){
+  const totalTokens = tokens.reduce((s,t) => s + t.balance, 0);
+  const totalCad = tokens.filter(t => t.status === 'active').reduce((s,t) => s + calcCad(t), 0);
+  document.getElementById('totalBalance').textContent = totalTokens.toFixed(2) + 'M';
+  document.getElementById('totalCad').textContent = formatCad(totalCad) + ' CAD';
+}
+function closeModal(e){if(e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('active')}
+
+// ═══ NAV ═══
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const sn=document.querySelector(`.nav-item[data-page="${page}"]`);
+  const tn=document.querySelector(`.tab-item[data-tab="${page}"]`);
+  if(sn)sn.classList.add('active');if(tn)tn.classList.add('active');
+  document.querySelector('.main').scrollTop=0;
+  if(page==='dataflow')requestAnimationFrame(()=>drawFlowRing());
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+
+// ═══ PRIVACY LEVEL ═══
+const privacyLevels={
+  0:{title:'Maximum Contribution',desc:'Share all non-sensitive data for the highest token rewards',rate:'2.0x',
+    icon:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'},
+  25:{title:'Open Sharing',desc:'Share most data categories with strong reward potential',rate:'1.5x',
+    icon:'<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"/><path d="m9 12 2 2 4-4"/>'},
+  50:{title:'Balanced Privacy',desc:'Standard data sharing with fair token compensation',rate:'1.0x',
+    icon:'<circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>'},
+  75:{title:'Enhanced Privacy',desc:'Share limited data only — lower rewards, stronger protection',rate:'0.75x',
+    icon:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'},
+  100:{title:'Maximum Privacy',desc:'Minimal data footprint — lowest rewards, maximum protection',rate:'0.5x',
+    icon:'<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'}
+};
+let currentPrivacyLevel=50;
+function updatePrivacyLevel(val){
+  val=parseInt(val);
+  if(val===currentPrivacyLevel)return;
+  currentPrivacyLevel=val;
+  const lvl=privacyLevels[val];
+  document.getElementById('privacyRateValue').textContent=lvl.rate;
+  const inner=document.getElementById('privacyCtaInner');
+  inner.style.opacity='0';inner.style.transform='translateY(6px)';
+  setTimeout(()=>{
+    document.getElementById('privacyCtaTitle').textContent=lvl.title;
+    document.getElementById('privacyCtaDesc').textContent=lvl.desc;
+    document.getElementById('privacyCtaRate').textContent=lvl.rate;
+    document.getElementById('privacyCtaIcon').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+lvl.icon+'</svg>';
+    inner.style.opacity='1';inner.style.transform='translateY(0)';
+  },180);
+  document.getElementById('privacyFullBtn').style.display=val===100?'block':'none';
+}
+
+function updateGreeting(){const h=new Date().getHours();let g;if(h<12)g='Good morning,';else if(h<18)g='Good afternoon,';else g='Good evening,';document.getElementById('greeting').innerHTML=g+'<br>Alex'}
+
+// ═══ DATA FLOW ═══
+const researchInstitutions = [
+  {name:'Anthropic Alignment Science', org:'Anthropic', icon:'claude', pctBase:28},
+  {name:'Google DeepMind Safety', org:'Google DeepMind', icon:'gemini', pctBase:22},
+  {name:'Frontier Model Training', org:'Anthropic', icon:'claude', pctBase:15},
+  {name:'Gemini Multimodal Research', org:'Google DeepMind', icon:'gemini', pctBase:12},
+  {name:'Constitutional AI Lab', org:'Anthropic', icon:'claude', pctBase:10},
+  {name:'Google Brain Language Team', org:'Google Research', icon:'gemini', pctBase:8},
+  {name:'DeepMind Ethics & Society', org:'Google DeepMind', icon:'gemini', pctBase:5}
+];
+
+const flowColors = ['#555','#777','#999','#AAA','#BBB','#CCC','#DDD'];
+let flowMode = 'dest';
+
+function generateFlowData(){
+  const items = researchInstitutions.map((r,i)=>{
+    const jitter = (Math.random()-0.5)*4;
+    return {...r, pct:Math.max(2,r.pctBase+jitter), color:flowColors[i]};
+  });
+  const total = items.reduce((s,x)=>s+x.pct,0);
+  items.forEach(x=>x.pct=+(x.pct/total*100).toFixed(1));
+  const diff = 100 - items.reduce((s,x)=>s+x.pct,0);
+  items[0].pct = +(items[0].pct+diff).toFixed(1);
+  return items;
+}
+
+const flowData = generateFlowData();
+transactions.forEach(tx=>{tx.dest=researchInstitutions[Math.floor(Math.random()*researchInstitutions.length)]});
+
+function getUsageData(){
+  const refunded = transactions.filter(tx=>tx.reward>0).length;
+  const privacy = transactions.filter(tx=>tx.reward===0&&tx.privacy).length;
+  const notRefunded = transactions.filter(tx=>tx.reward===0&&!tx.privacy).length;
+  const total = refunded + notRefunded + privacy;
+  const items = [
+    {label:'Refunded', pct:+(refunded/total*100).toFixed(1), color:'#666', count:refunded},
+    {label:'Not Refunded', pct:+(notRefunded/total*100).toFixed(1), color:'#D0D0D0', count:notRefunded}
+  ];
+  if(privacy>0) items.push({label:'Privacy Issue', pct:+(privacy/total*100).toFixed(1), color:'#F0A030', count:privacy});
+  return items;
+}
+
+let flowAnimId = null;
+let flowCurrentSegments = null;
+let flowTargetSegments = null;
+const RING_LINE_W = 10;
+const RING_MID_R = 76;
+const RING_CAP_ANGLE = (RING_LINE_W/2) / RING_MID_R;
+
+function segmentsFromData(data){
+  const visualGap = 0.06;
+  const rawGap = visualGap + 2*RING_CAP_ANGLE;
+  const totalGap = rawGap * data.length;
+  const usable = Math.PI*2 - totalGap;
+  let angle = -Math.PI/2;
+  return data.map(d=>{
+    const sweep = (d.pct/100)*usable;
+    const seg = {start:angle, sweep:sweep, color:d.color};
+    angle += sweep + rawGap;
+    return seg;
+  });
+}
+
+function hexToRgb(hex){
+  hex = hex.replace('#','');
+  if(hex.length===3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+}
+
+function rgbToHex(r,g,b){return '#'+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('')}
+
+function lerpSegments(from,to,t){
+  const maxLen = Math.max(from.length,to.length);
+  const result = [];
+  for(let i=0;i<maxLen;i++){
+    const f = from[Math.min(i,from.length-1)];
+    const tg = to[Math.min(i,to.length-1)];
+    const fc = hexToRgb(f.color), tc = hexToRgb(tg.color);
+    result.push({
+      start: f.start+(tg.start-f.start)*t,
+      sweep: f.sweep+(tg.sweep-f.sweep)*t,
+      color: rgbToHex(fc[0]+(tc[0]-fc[0])*t, fc[1]+(tc[1]-fc[1])*t, fc[2]+(tc[2]-fc[2])*t)
+    });
+  }
+  return result;
+}
+
+function drawRingFrame(segments){
+  const canvas = document.getElementById('flowRingChart');
+  if(!canvas)return;
+  const dpr = window.devicePixelRatio||1;
+  const size = 200;
+  canvas.width = size*dpr; canvas.height = size*dpr;
+  canvas.style.width = size+'px'; canvas.style.height = size+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const cx=size/2, cy=size/2;
+  ctx.lineCap = 'round';
+  segments.forEach(s=>{
+    if(s.sweep>0.01){
+      ctx.beginPath();
+      ctx.arc(cx,cy,RING_MID_R,s.start,s.start+s.sweep);
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = RING_LINE_W;
+      ctx.stroke();
+    }
+  });
+}
+
+function slotAnimate(trackEl, newText){
+  const current = trackEl.querySelector('span');
+  if(current && current.textContent === newText) return;
+  const incoming = document.createElement('span');
+  incoming.textContent = newText;
+  trackEl.appendChild(incoming);
+  trackEl.style.transition = 'none';
+  const h = trackEl.parentElement.offsetHeight;
+  trackEl.style.transform = 'translateY(0)';
+  requestAnimationFrame(()=>{
+    trackEl.style.transition = 'transform .45s cubic-bezier(.4,0,.2,1)';
+    trackEl.style.transform = 'translateY(-'+h+'px)';
+    setTimeout(()=>{
+      if(current) current.remove();
+      trackEl.style.transition = 'none';
+      trackEl.style.transform = 'translateY(0)';
+    },460);
+  });
+}
+
+function updateFlowSlots(animate){
+  const numTrack = document.getElementById('flowSlotNumber');
+  const lblTrack = document.getElementById('flowSlotLabel');
+  let numText, lblText;
+  if(flowMode==='dest'){
+    numText = '7';
+    lblText = 'destinations';
+  } else {
+    const usage = getUsageData();
+    numText = usage[0].pct+'%';
+    lblText = 'refunded';
+  }
+  if(animate){
+    slotAnimate(numTrack, numText);
+    slotAnimate(lblTrack, lblText);
+  } else {
+    numTrack.innerHTML = '<span>'+numText+'</span>';
+    lblTrack.innerHTML = '<span>'+lblText+'</span>';
+  }
+}
+
+function animateFlowRing(){
+  if(flowAnimId) cancelAnimationFrame(flowAnimId);
+  const duration = 500;
+  const startTime = performance.now();
+  function tick(now){
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed/duration);
+    const ease = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+    const segs = lerpSegments(flowCurrentSegments, flowTargetSegments, ease);
+    drawRingFrame(segs);
+    if(t<1) flowAnimId = requestAnimationFrame(tick);
+    else { flowCurrentSegments = flowTargetSegments; flowAnimId = null; }
+  }
+  flowAnimId = requestAnimationFrame(tick);
+}
+
+function drawFlowRing(animate){
+  const data = flowMode==='dest' ? flowData : getUsageData();
+  const newSegs = segmentsFromData(data);
+  if(animate && flowCurrentSegments){
+    flowTargetSegments = newSegs;
+    animateFlowRing();
+    updateFlowSlots(true);
+  } else {
+    flowCurrentSegments = newSegs;
+    drawRingFrame(newSegs);
+    updateFlowSlots(false);
+  }
+}
+
+function renderFlowLegend(){
+  const el = document.getElementById('flowLegend');
+  if(flowMode==='dest'){
+    const unique = [...new Set(flowData.map(d=>d.org))];
+    const orgColors = {};
+    flowData.forEach(d=>{if(!orgColors[d.org])orgColors[d.org]=d.color});
+    el.innerHTML = unique.map(o=>`<div class="flow-legend-item"><span class="flow-legend-dot" style="background:${orgColors[o]}"></span>${o}</div>`).join('');
+  } else {
+    const usage = getUsageData();
+    el.innerHTML = usage.map(d=>`<div class="flow-legend-item"><span class="flow-legend-dot" style="background:${d.color}"></span>${d.label} (${d.count})</div>`).join('');
+  }
+}
+
+function getTokenIconSvg(iconId){
+  const t = tokens.find(x=>x.id===iconId);
+  return t ? t.icon : '';
+}
+
+function renderFlowContribs(){
+  const el = document.getElementById('flowContribList');
+  const titleEl = document.getElementById('flowSectionTitle');
+  if(flowMode==='dest'){
+    titleEl.innerHTML = 'Research Contributions <span id="flowContribCount">'+flowData.length+' teams</span>';
+    el.innerHTML = flowData.map(d=>{
+      const tkCount = Math.floor(Math.random()*400+50)+'K';
+      return `<div class="flow-contrib-card">
+        <div class="flow-contrib-icon">${getTokenIconSvg(d.icon)}</div>
+        <div class="flow-contrib-info"><div class="flow-contrib-name">${d.name}</div><div class="flow-contrib-org">${d.org}</div></div>
+        <div class="flow-contrib-right"><div class="flow-contrib-pct">${d.pct}%</div><div class="flow-contrib-tokens">${tkCount} tokens</div></div>
+      </div>`;
+    }).join('');
+  } else {
+    const usage = getUsageData();
+    titleEl.innerHTML = 'Usage Breakdown <span id="flowContribCount">'+transactions.length+' total</span>';
+    el.innerHTML = usage.map(d=>{
+      let iconPath, iconColor, iconBg;
+      if(d.label==='Refunded'){
+        iconPath='<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>';
+        iconColor='#555'; iconBg='#E8E8E8';
+      } else if(d.label==='Privacy Issue'){
+        iconPath='<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M6.376 18.91a6 6 0 0 1 11.249.003"/><circle cx="12" cy="11" r="4"/>';
+        iconColor='#E68A00'; iconBg='rgba(255,152,0,.12)';
+      } else {
+        iconPath='<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9 12h6"/>';
+        iconColor='#BBB'; iconBg='#F5F5F5';
+      }
+      return `<div class="flow-contrib-card">
+        <div class="flow-contrib-icon" style="background:${iconBg}"><svg viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg></div>
+        <div class="flow-contrib-info"><div class="flow-contrib-name">${d.label}</div><div class="flow-contrib-org">${d.count} of ${transactions.length} transactions</div></div>
+        <div class="flow-contrib-right"><div class="flow-contrib-pct">${d.pct}%</div></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+const providerOrgMap={'anthropic-claude':'Anthropic','google-gemini':'Google','openai-chatgpt':'OpenAI'};
+
+function flowTxRow(tx, destLabel, mode){
+  const time = tx.date.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  const hash = genHash();
+  if(mode==='dest'){
+    return `<div class="flow-tx-item">
+      <div class="flow-tx-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+      <div class="flow-tx-info"><div class="flow-tx-title">${tx.log}</div><div class="flow-tx-sub"><span style="opacity:.5;margin-right:4px">${hash}</span>${time}</div></div>
+      <div class="flow-tx-dest">${destLabel}</div>
+    </div>`;
+  }
+  const isRefunded = tx.reward>0;
+  const isPrivacy = !isRefunded && tx.privacy;
+  const iconColor = isRefunded?'#555':(isPrivacy?'#E68A00':'#BBB');
+  const dotBg = isRefunded?'#E8E8E8':(isPrivacy?'rgba(255,152,0,.12)':'#F5F5F5');
+  let iconPath;
+  if(isRefunded) iconPath='<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>';
+  else if(isPrivacy) iconPath='<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M6.376 18.91a6 6 0 0 1 11.249.003"/><circle cx="12" cy="11" r="4"/>';
+  else iconPath='<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9 12h6"/>';
+  const privacyPill = isPrivacy?'<span class="flow-tx-privacy">Privacy Issue</span>':'';
+  return `<div class="flow-tx-item">
+    <div class="flow-tx-dot" style="background:${dotBg}"><svg viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg></div>
+    <div class="flow-tx-info"><div class="flow-tx-title">${tx.log}</div><div class="flow-tx-sub"><span style="opacity:.5;margin-right:4px">${hash}</span>${time}${privacyPill}</div></div>
+    <div class="flow-tx-dest">${isRefunded?'+'+formatReward(tx.reward)+' TK':'0 TK'}</div>
+  </div>`;
+}
+
+function renderFlowTx(){
+  const el = document.getElementById('flowTxList');
+  if(flowMode==='dest'){
+    const txItems = transactions.filter(tx=>tx.reward>0).slice(0,12);
+    document.getElementById('flowTxCount').textContent = txItems.length+' records';
+    const groups = {};
+    txItems.forEach(tx=>{
+      const org = tx.dest.org.includes('Google')?'Google':'Anthropic';
+      if(!groups[org]) groups[org]=[];
+      groups[org].push(tx);
+    });
+    let html = '';
+    ['Anthropic','Google'].forEach(org=>{
+      if(!groups[org]||!groups[org].length) return;
+      html += `<div class="flow-tx-group-label">${org}</div>`;
+      html += groups[org].map(tx=>flowTxRow(tx, tx.dest.name.split(' ').slice(0,2).join(' '), 'dest')).join('');
+    });
+    el.innerHTML = html;
+  } else {
+    const allTx = transactions.slice(0,14);
+    document.getElementById('flowTxCount').textContent = allTx.length+' records';
+    const groups = {};
+    allTx.forEach(tx=>{
+      const org = providerOrgMap[tx.provider]||tx.provider;
+      if(!groups[org]) groups[org]=[];
+      groups[org].push(tx);
+    });
+    let html = '';
+    ['Anthropic','Google','OpenAI'].forEach(org=>{
+      if(!groups[org]||!groups[org].length) return;
+      html += `<div class="flow-tx-group-label">${org}</div>`;
+      html += groups[org].map(tx=>flowTxRow(tx, null, 'usage')).join('');
+    });
+    el.innerHTML = html;
+  }
+}
+
+function setFlowMode(mode){
+  flowMode = mode;
+  document.getElementById('flowModeDestBtn').classList.toggle('active',mode==='dest');
+  document.getElementById('flowModeUsageBtn').classList.toggle('active',mode==='usage');
+  drawFlowRing(true);
+  const content = document.querySelectorAll('#flowContribList,#flowTxList,#flowLegend,#flowSectionTitle');
+  content.forEach(el=>{el.style.transition='opacity .2s';el.style.opacity='0'});
+  setTimeout(()=>{
+    renderFlowLegend();
+    renderFlowContribs();
+    renderFlowTx();
+    content.forEach(el=>{el.style.opacity='1'});
+  },200);
+}
+
+function renderDataFlow(){
+  drawFlowRing(false);
+  renderFlowLegend();
+  renderFlowContribs();
+  renderFlowTx();
+}
+
+// ═══ INIT ═══
+updateGreeting();
+renderDropdown();
+updateTrendsMeta();
+renderModelsChips();
+renderTokens();
+renderRewards();
+renderDataFlow();
+updateTotalBalance();
+
+requestAnimationFrame(() => { requestAnimationFrame(() => drawChart()); });
+window.addEventListener('resize', () => drawChart());
+</script>
+</body>
+</html>
